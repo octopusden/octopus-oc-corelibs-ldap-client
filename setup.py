@@ -3,7 +3,7 @@ from setuptools import setup
 __version = "1.0.1"
 
 spec = {
-    "name": "oc_ldap_client",
+    "name": "oc-ldap-client",
     "version": __version,
     "license": "LGPLv2",
     "description": "Base classes for LDAP objects",
