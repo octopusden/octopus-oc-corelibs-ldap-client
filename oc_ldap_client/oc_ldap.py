@@ -87,7 +87,7 @@ class OcLdap(object):
         logging.debug("Certificate:\t%s" % user_cert)
         logging.debug("CA ceritificates chain:\t%s" % ca_chain)
         logging.debug("Username:\t%s" % user)
-        logging.debug("Password:\t%s" * ('*' * len(password) if password or "<not set>"))
+        logging.debug("Password:\t%s" % ('*' * len(password) if password else "<not set>"))
 
         # long definition of Tls connection
         # set the variables necessary if given
@@ -128,7 +128,7 @@ class OcLdap(object):
         if all([user_key, user_cert]):
             __ldap_params.update({
                 "authentication": ldap3.SASL,
-                "sasl_mechanism": 'EXTERNAL'
+                "sasl_mechanism": 'EXTERNAL',
                 "sasl_credentials": ''
                 })
         elif all([user, password]):
