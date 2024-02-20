@@ -13,7 +13,8 @@ class OcLdap(object):
     OC LDAP server connection class
     """
 
-    def __init__(self, url=None, user_cert=None, user_key=None, ca_chain=None, baseDn=None):
+    def __init__(self, url=None, user_cert=None, user_key=None, ca_chain=None, baseDn=None,
+                 user=None, password=None):
         """
         Initialization of connection
         :param str url: OpenLDAP host URI
@@ -29,6 +30,8 @@ class OcLdap(object):
         # LDAPTLS_KEY
         # LDAPTLS_CACERT
         # LDAP_BASE_DN
+        # LDAP_USER
+        # LDAP_PASSWORD
 
         # default ports for supported protocols
         # taken from https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml
@@ -68,24 +71,43 @@ class OcLdap(object):
             raise ValueError("Unable to find-out port number")
 
         url = "%s://%s" % (proto, host)
-        user_key = os.path.abspath(user_key or os.getenv("LDAPTLS_KEY"))
-        user_cert = os.path.abspath(user_cert or os.getenv("LDAPTLS_CERT"))
-        ca_chain = os.path.abspath(ca_chain or os.getenv("LDAPTLS_CACERT"))
+        user_key = self.__make_absolute_path(user_key or os.getenv("LDAPTLS_KEY"))
+        user_cert = self.__make_absolute_path(user_cert or os.getenv("LDAPTLS_CERT"))
+        ca_chain = self.__make_absolute_path(ca_chain or os.getenv("LDAPTLS_CACERT"))
+
+        user = user or os.getenv("LDAP_USER")
+        password = password or os.getenv("LDAP_PASSWORD")
 
         logging.debug("Host:\t%s" % url)
         logging.debug("Port:\t%d" % port)
         logging.debug("Private key:\t%s" % user_key)
         logging.debug("Certificate:\t%s" % user_cert)
         logging.debug("CA ceritificates chain:\t%s" % ca_chain)
+        logging.debug("Username:\t%s" % user)
+        logging.debug("Password:\t%s" % ('*' * len(password) if password else "<not set>"))
 
         # long definition of Tls connection
-        self.tls = ldap3.Tls(
-            local_private_key_file=user_key,
-            local_certificate_file=user_cert,
-            ca_certs_file=ca_chain,
-            validate=ssl.CERT_REQUIRED,
-            version=ssl.PROTOCOL_SSLv23
-        )
+        # set the variables necessary if given
+        # unfortunately we have to check every parameter for constructor
+        # before calling it because of no legal possibility to set
+        # those variables inside *Tls* object after creating
+        # see doc: https://ldap3.readthedocs.io/en/latest/ssltls.html
+        __tls_params = {
+                "validate": ssl.CERT_OPTIONAL,
+                "version": ssl.PROTOCOL_SSLv23
+                }
+
+        for __k, __v in [
+                ("local_private_key_file", user_key),
+                ("local_certificate_file", user_cert),
+                ("ca_certs_file", ca_chain)]:
+
+            if not __v:
+                continue
+
+            __tls_params[__k] = __v
+
+        self.tls = ldap3.Tls(**__tls_params)
 
         self.server = ldap3.Server(
             host=url,
@@ -93,16 +115,42 @@ class OcLdap(object):
             tls=self.tls
         )
 
-        self.ldap_c = ldap3.Connection(
-            server=self.server,
-            version=3,
-            authentication=ldap3.SASL,
-            sasl_mechanism='EXTERNAL',
-            sasl_credentials=''
-        )
+        # the same trick as above for TLS because of different authentication mechanisms
+        # used for SASL and SIMPLE in case of username/password given
+        __ldap_params = {
+                "server": self.server,
+                "version": 3,
+                "authentication": ldap3.ANONYMOUS
+                }
+
+        if all([user_key, user_cert]):
+            __ldap_params.update({
+                "authentication": ldap3.SASL,
+                "sasl_mechanism": 'EXTERNAL',
+                "sasl_credentials": ''
+                })
+        elif all([user, password]):
+            __ldap_params.update({
+                "authentication": ldap3.SIMPLE,
+                "user": user,
+                "password": password
+                })
+
+        self.ldap_c = ldap3.Connection(**__ldap_params)
 
         self.ldap_c.start_tls()
         self.ldap_c.bind()
+
+
+    def __make_absolute_path(self, pth):
+        """
+        Workaround for exception in case 'None' is passed to 'os.path.abspath'
+        """
+
+        if not pth:
+            return None
+
+        return os.path.abspath(pth)
 
     def _check_search_rslt(self, rslt):
         """

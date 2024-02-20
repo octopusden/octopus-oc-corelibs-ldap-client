@@ -11,14 +11,27 @@ class MockLdapConnection(ldap3.Connection):
         if kwargs['version'] != 3:
             raise ValueError('Version wrong')
 
-        if kwargs['authentication'] != ldap3.SASL:
+        if kwargs['authentication'] not in [ldap3.SASL, ldap3.SIMPLE, ldap3.ANONYMOUS]:
             raise ValueError('Authentication wrong')
 
-        if kwargs['sasl_mechanism'] != 'EXTERNAL':
-            raise ValueError("SASL mechanism is wrong")
+        ## SASL-specific check:
+        if kwargs['authentication'] == ldap3.SASL and kwargs['sasl_mechanism'] != 'EXTERNAL':
+                raise ValueError("SASL mechanism is wrong")
 
-        if len(kwargs['sasl_credentials']):
-            raise ValueError('SASL credentials is not necessary for external mechanism')
+        if kwargs.get('sasl_credentials'):
+            raise ValueError('SASL credentials are not necessary for EXTERNAL mechanism')
+
+        # SIMPLE-specific check
+        if kwargs['authentication'] == ldap3.SIMPLE:
+            for __arg in ['user', 'password']:
+                if not kwargs.get(__arg):
+                    raise ValueError("Mandatory for SIMPLE authentication: [%s]" % __arg)
+
+        # ANONYMOUS-specific checks
+        if kwargs['authentication'] == ldap3.ANONYMOUS:
+            for __arg in ['user', 'password', 'sasl_mechanism']:
+                if kwargs.get(__arg):
+                    raise ValueError("Have to be unset for ANONYMOUS: [%s]" % __arg)
 
         # replace Server with some fake values
         super().__init__ (
