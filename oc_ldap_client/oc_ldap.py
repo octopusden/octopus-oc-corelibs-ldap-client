@@ -32,9 +32,6 @@ class OcLdap(object):
         # LDAP_BASE_DN
         # LDAP_USER
         # LDAP_PASSWORD
-        # cert/key/cacert or user/password have to be specified
-        # but this is not verified below since it is done by library
-        # authentication will simply fail with exception
 
         # default ports for supported protocols
         # taken from https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml
