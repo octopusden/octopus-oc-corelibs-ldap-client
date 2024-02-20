@@ -31,6 +31,25 @@ class OcLdapTest(TestCase):
         self.assertEqual(ldap_t.baseDn, "dc=some,dc=test,dc=domain,dc=local")
         self.assertTrue(ldap_t.ldap_c.tls_started)
 
+    def test_init__username(self):
+        with patch('ldap3.Connection', new=MockLdapConnection):
+            ldap_t = OcLdap(url='ldap://localhost:389',
+                user='test_user',
+                password='test_password',
+                baseDn='dc=some,dc=test,dc=domain,dc=local')
+
+            self.assertEqual(ldap_t.baseDn, "dc=some,dc=test,dc=domain,dc=local")
+            self.assertTrue(ldap_t.ldap_c.tls_started)
+
+    def test_init_anonymous(self):
+        with patch('ldap3.Connection', new=MockLdapConnection):
+            ldap_t = OcLdap(url='ldap://localhost:389',
+                baseDn='dc=some,dc=test,dc=domain,dc=local')
+
+            self.assertEqual(ldap_t.baseDn, "dc=some,dc=test,dc=domain,dc=local")
+            self.assertTrue(ldap_t.ldap_c.tls_started)
+
+
     def test_get_record(self):
         ldap_t = self._get_ldap()
         # try to get admin group record from our json test data

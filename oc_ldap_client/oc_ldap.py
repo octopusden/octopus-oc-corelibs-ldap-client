@@ -122,7 +122,8 @@ class OcLdap(object):
         # used for SASL and SIMPLE in case of username/password given
         __ldap_params = {
                 "server": self.server,
-                "version": 3
+                "version": 3,
+                "authentication": ldap3.ANONYMOUS
                 }
 
         if all([user_key, user_cert]):
@@ -137,9 +138,6 @@ class OcLdap(object):
                 "user": user,
                 "password": password
                 })
-        else:
-            __ldap_params["authentication"] = ldap3.ANONYMOUS
-                
 
         self.ldap_c = ldap3.Connection(**__ldap_params)
 
