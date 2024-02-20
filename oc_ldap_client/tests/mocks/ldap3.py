@@ -19,7 +19,7 @@ class MockLdapConnection(ldap3.Connection):
                 raise ValueError("SASL mechanism is wrong")
 
         if kwargs.get('sasl_credentials'):
-            raise ValueError('SASL credentials is not necessary for external mechanism')
+            raise ValueError('SASL credentials are not necessary for EXTERNAL mechanism')
 
         # SIMPLE-specific check
         if kwargs['authentication'] == ldap3.SIMPLE:
