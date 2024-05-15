@@ -11,7 +11,7 @@ class OcLdapUserCat(OcLdap):
     User catalogue-specific methods
     """
 
-    def __init__(self, url=None, user_cert=None, user_key=None, ca_chain=None, baseDn=None
+    def __init__(self, url=None, user_cert=None, user_key=None, ca_chain=None, baseDn=None,
                  user=None, password=None):
         """
         Initialization
