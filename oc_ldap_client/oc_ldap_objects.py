@@ -11,7 +11,8 @@ class OcLdapUserCat(OcLdap):
     User catalogue-specific methods
     """
 
-    def __init__(self, url=None, user_cert=None, user_key=None, ca_chain=None, baseDn=None):
+    def __init__(self, url=None, user_cert=None, user_key=None, ca_chain=None, baseDn=None
+                 user=None, password=None):
         """
         Initialization
         :param str url: OpenLDAP host URI
@@ -21,7 +22,8 @@ class OcLdapUserCat(OcLdap):
         :param str baseDn: base DN to work with
         """
         super().__init__(url=url, user_cert=user_cert,
-                         user_key=user_key, ca_chain=ca_chain, baseDn=baseDn)
+                         user_key=user_key, ca_chain=ca_chain, baseDn=baseDn,
+                         user=user, password=password)
         self._userObjectClass = 'inetOrgPerson'
         self._groupObjectClass = 'groupOfUniqueNames'
 
